@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Poetry
+poetry.lock
+
+# OS-specific
+.DS_Store
+Thumbs.db
+.directory
+desktop.ini
+
+# Project-specific
+logs/
+*.mp4
+*.log
+*.filtered.log
+combinedlog.txt
+.git-viz/
+git-visualization.mp4
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
