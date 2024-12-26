@@ -59,6 +59,8 @@ def run_command(
             stderr=stderr,
             creationflags=creation_flags if platform.system() == 'Windows' else 0
         )
+    except FileNotFoundError as e:
+        raise RuntimeError(f"Command not found: {command[0]}") from e
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Command failed: {' '.join(command)}") from e
 

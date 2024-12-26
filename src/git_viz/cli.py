@@ -7,7 +7,10 @@ from .core import GitVizProcessor
 from .user_manager import UserManager
 from .platform_utils import check_dependencies
 
+user_manager = UserManager()
+
 @click.group()
+@click.version_option(package_name="git-viz", message='%(package)s, version %(version)s') 
 def cli():
     """Git repository visualization tool with user management."""
     pass
@@ -20,7 +23,7 @@ def cli():
               help='End date in YYYY-MM-DD format')
 @click.option('--output', '-o', default='git-visualization.mp4',
               help='Output file path')
-def visualize(directories: List[str], start_date: str, end_date: Optional[str],
+def visualize(directories, start_date: str, end_date: Optional[str],
               output: str):
     """Generate a visualization for the specified Git repositories."""
     # Check dependencies
@@ -40,7 +43,8 @@ def visualize(directories: List[str], start_date: str, end_date: Optional[str],
             end_date=end_date,
             output_file=output
         ) as processor:
-            processor.process_repositories(directories)
+            # Convert directories tuple to list before passing
+            processor.process_repositories([str(d) for d in directories])
         click.echo(f"Visualization saved to: {output}")
     except Exception as e:
         click.echo(f"Error: {str(e)}", err=True)
@@ -86,10 +90,9 @@ def set_avatar(canonical_name: str, avatar_path: str):
 @users.command()
 def list():
     """List all user mappings."""
-    user_manager = UserManager()
     mappings = user_manager.get_all_users()
     
-    if not mappings:
+    if len(mappings) == 0:
         click.echo("No user mappings found.")
         return
     

@@ -8,19 +8,49 @@ from PIL import Image
 import os
 
 class UserManager:
-    def __init__(self):
-        self.app_name = "git-viz"
-        self.config_dir = Path(user_config_dir(self.app_name))
-        self.data_dir = Path(user_data_dir(self.app_name))
-        self.avatar_dir = self.data_dir / "avatars"
-        self.config_file = self.config_dir / "users.yaml"
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self, config_dir: Optional[Path] = None, data_dir: Optional[Path] = None):
+        """Initialize UserManager with optional custom config and data directories.
         
-        # Create necessary directories
-        self.config_dir.mkdir(parents=True, exist_ok=True)
-        self.avatar_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Load or create user mappings
-        self._load_user_mappings()
+        Args:
+            config_dir: Optional custom config directory. If None, uses platformdirs.
+            data_dir: Optional custom data directory. If None, uses platformdirs.
+        """
+        if (config_dir is not None or data_dir is not None) and self._initialized:
+            self._initialized = False
+            
+        if not self._initialized:
+            self.app_name = "git-viz"
+            
+            # Set config directory
+            if config_dir is not None:
+                self.config_dir = Path(config_dir)
+            else:
+                self.config_dir = Path(user_config_dir(self.app_name))
+                
+            # Set data directory
+            if data_dir is not None:
+                self.data_dir = Path(data_dir)
+            else:
+                self.data_dir = Path(user_data_dir(self.app_name))
+                
+            self.avatar_dir = self.data_dir / "avatars"
+            self.config_file = self.config_dir / "users.yaml"
+            
+            # Create necessary directories
+            self.config_dir.mkdir(parents=True, exist_ok=True)
+            self.avatar_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Load or create user mappings
+            self._load_user_mappings()
+            self._initialized = True
 
     def _load_user_mappings(self) -> None:
         """Load user mappings from config file or create default."""
@@ -35,6 +65,11 @@ class UserManager:
         """Save user mappings to config file."""
         with open(self.config_file, 'w') as f:
             yaml.dump(self.user_mappings, f)
+
+    @classmethod
+    def reset(cls):
+        """Reset the singleton instance for testing purposes."""
+        cls._instance = None
 
     def add_user_mapping(self, git_name: str, canonical_name: str) -> None:
         """Add a mapping between a Git username and canonical name."""
