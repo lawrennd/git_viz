@@ -150,10 +150,15 @@ def test_users_list_command(runner):
         
         # List users
         result = runner.invoke(cli, ["users", "list"])
+        
+        # Check basic success
         assert result.exit_code == 0
-        assert "john.doe -> John Doe" in result.output
-        assert "jane.doe -> Jane Doe" in result.output
-
+        
+        # Check that both mappings exist in the output, regardless of order
+        output = result.output
+        assert "john.doe -> John Doe" in output
+        assert "jane.doe -> Jane Doe" in output
+        assert "User Mappings:" in output
 
 @pytest.fixture(autouse=True)
 def clean_user_mappings(mocker):
