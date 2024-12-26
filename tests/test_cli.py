@@ -141,14 +141,20 @@ def test_users_set_avatar_valid_path(runner):
         assert result.exit_code == 0
         assert "Avatar set for user" in result.output
 
-def test_users_list_command(runner):
+def test_users_list_command(runner, mocker):
     """Test listing users command."""
     with runner.isolated_filesystem():
+        # Reset UserManager singleton and create new instance with empty mappings
+        UserManager._instance = None
+        mock_user_manager = UserManager()
+        mock_user_manager.user_mappings = {}  # Use user_mappings instead of _mappings
+        mocker.patch('git_viz.cli.user_manager', new=mock_user_manager)
+
         # First verify we start with no mappings
         result = runner.invoke(cli, ["users", "list"])
         assert "No user mappings found" in result.output
 
-        # Add users one at a time and verify after each addition
+        # Rest of the test remains the same...
         result = runner.invoke(cli, ["users", "map", "john.doe", "John Doe"], input='y\n')
         assert result.exit_code == 0
         assert "Mapped 'john.doe' to 'John Doe'" in result.output
@@ -164,8 +170,6 @@ def test_users_list_command(runner):
 
         # Final verification
         result = runner.invoke(cli, ["users", "list"])
-        print("\nActual output:", result.output)  # Debug output
-        
         assert result.exit_code == 0
         assert "User Mappings:" in result.output
         assert "john.doe -> John Doe" in result.output
@@ -185,14 +189,15 @@ def clean_user_mappings(mocker, tmp_path):
     mocker.patch('platformdirs.user_data_dir', return_value=str(data_dir))
     
     # Reset UserManager singleton
-    UserManager._instance = None
-    mocker.patch('git_viz.cli.user_manager', new=UserManager())
+    user_manager = UserManager()
+    user_manager._mappings = {}  # Explicitly clear mappings
+    mocker.patch('git_viz.cli.user_manager', new=user_manager)
     
     yield
     
     # Cleanup
     UserManager._instance = None
-    
+
 def test_users_list_empty(runner, mocker):
     """Test listing users when none exist."""
     # Create a mock user manager instance
