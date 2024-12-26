@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "git-viz"
+version = "0.1.0"
+description = "A cross-platform Git repository visualization tool with user management"
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
+packages = [{include = "git_viz", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+click = "^8.1.7"
+platformdirs = "^4.1.0"
+pyyaml = "^6.0.1"
+pillow = "^10.1.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+black = "^23.11.0"
+isort = "^5.12.0"
+mypy = "^1.7.1"
+ruff = "^0.1.6"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+git-viz = "git_viz.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=git_viz --cov-report=term-missing"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
