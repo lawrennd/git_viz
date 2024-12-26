@@ -149,39 +149,50 @@ def test_users_list_command(runner):
         assert "No user mappings found" in result.output
 
         # Add users one at a time and verify after each addition
-        result = runner.invoke(cli, ["users", "map", "john.doe", "John Doe"])
+        result = runner.invoke(cli, ["users", "map", "john.doe", "John Doe"], input='y\n')
         assert result.exit_code == 0
+        assert "Mapped 'john.doe' to 'John Doe'" in result.output
 
-        result = runner.invoke(cli, ["users", "map", "jane.doe", "Jane Doe"])
-        assert result.exit_code == 0
-
-        # Now check the final list
+        # Verify first mapping is present
         result = runner.invoke(cli, ["users", "list"])
-        
-        # Check basic success
+        assert "john.doe -> John Doe" in result.output
+
+        # Add second user
+        result = runner.invoke(cli, ["users", "map", "jane.doe", "Jane Doe"], input='y\n')
         assert result.exit_code == 0
+        assert "Mapped 'jane.doe' to 'Jane Doe'" in result.output
+
+        # Final verification
+        result = runner.invoke(cli, ["users", "list"])
+        print("\nActual output:", result.output)  # Debug output
         
-        # Print the actual output for debugging
-        print("\nActual output:", result.output)
-        
-        # Check each mapping individually
+        assert result.exit_code == 0
         assert "User Mappings:" in result.output
-        assert any("john.doe -> John Doe" in line for line in result.output.splitlines())
-        assert any("jane.doe -> Jane Doe" in line for line in result.output.splitlines())
+        assert "john.doe -> John Doe" in result.output
+        assert "jane.doe -> Jane Doe" in result.output
 
 @pytest.fixture(autouse=True)
-def clean_user_mappings(mocker):
+def clean_user_mappings(mocker, tmp_path):
     """Clean up user mappings before each test."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        temp_path = Path(temp_dir)
-        # Mock both config and data directories
-        mocker.patch('platformdirs.user_config_dir', return_value=temp_path)
-        mocker.patch('platformdirs.user_data_dir', return_value=temp_path)
-        # Ensure the UserManager is reinitialized with empty mappings
-        mocker.patch('git_viz.cli.user_manager._instance', None)
-        UserManager._instance = None  # Force singleton reset
-        yield
-
+    # Use pytest's tmp_path instead of tempfile
+    config_dir = tmp_path / "config"
+    data_dir = tmp_path / "data"
+    config_dir.mkdir()
+    data_dir.mkdir()
+    
+    # Mock the directories
+    mocker.patch('platformdirs.user_config_dir', return_value=str(config_dir))
+    mocker.patch('platformdirs.user_data_dir', return_value=str(data_dir))
+    
+    # Reset UserManager singleton
+    UserManager._instance = None
+    mocker.patch('git_viz.cli.user_manager', new=UserManager())
+    
+    yield
+    
+    # Cleanup
+    UserManager._instance = None
+    
 def test_users_list_empty(runner, mocker):
     """Test listing users when none exist."""
     # Create a mock user manager instance
