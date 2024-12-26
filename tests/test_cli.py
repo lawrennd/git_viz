@@ -144,21 +144,30 @@ def test_users_set_avatar_valid_path(runner):
 def test_users_list_command(runner):
     """Test listing users command."""
     with runner.isolated_filesystem():
-        # Add some test users
-        runner.invoke(cli, ["users", "map", "john.doe", "John Doe"])
-        runner.invoke(cli, ["users", "map", "jane.doe", "Jane Doe"])
-        
-        # List users
+        # First verify we start with no mappings
+        result = runner.invoke(cli, ["users", "list"])
+        assert "No user mappings found" in result.output
+
+        # Add users one at a time and verify after each addition
+        result = runner.invoke(cli, ["users", "map", "john.doe", "John Doe"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(cli, ["users", "map", "jane.doe", "Jane Doe"])
+        assert result.exit_code == 0
+
+        # Now check the final list
         result = runner.invoke(cli, ["users", "list"])
         
         # Check basic success
         assert result.exit_code == 0
         
-        # Check that both mappings exist in the output, regardless of order
-        output = result.output
-        assert "john.doe -> John Doe" in output
-        assert "jane.doe -> Jane Doe" in output
-        assert "User Mappings:" in output
+        # Print the actual output for debugging
+        print("\nActual output:", result.output)
+        
+        # Check each mapping individually
+        assert "User Mappings:" in result.output
+        assert any("john.doe -> John Doe" in line for line in result.output.splitlines())
+        assert any("jane.doe -> Jane Doe" in line for line in result.output.splitlines())
 
 @pytest.fixture(autouse=True)
 def clean_user_mappings(mocker):
@@ -170,6 +179,7 @@ def clean_user_mappings(mocker):
         mocker.patch('platformdirs.user_data_dir', return_value=temp_path)
         # Ensure the UserManager is reinitialized with empty mappings
         mocker.patch('git_viz.cli.user_manager._instance', None)
+        UserManager._instance = None  # Force singleton reset
         yield
 
 def test_users_list_empty(runner, mocker):
