@@ -20,22 +20,27 @@ def temp_git_repo():
         repo_dir = Path(temp_dir) / "test_repo"
         repo_dir.mkdir()
         
-        # Initialize git repo
-        os.chdir(repo_dir)
-        os.system("git init")
-        os.system('git config user.email "test@example.com"')
-        os.system('git config user.name "Test User"')
-        
-        # Create a test file and commit it
-        test_file = repo_dir / "test.txt"
-        test_file.write_text("Test content")
-        os.system("git add test.txt")
-        os.system('git commit -m "Initial commit"')
-        
-        yield repo_dir
-        
-        # Restore original directory
-        os.chdir(original_dir)
+        try:
+            # Initialize git repo
+            os.chdir(repo_dir)
+            os.system("git init")
+            os.system('git config user.email "test@example.com"')
+            os.system('git config user.name "Test User"')
+            
+            # Create a test file and commit it
+            test_file = repo_dir / "test.txt"
+            test_file.write_text("Test content")
+            os.system("git add test.txt")
+            os.system('git commit -m "Initial commit"')
+            
+            yield repo_dir
+            
+        finally:
+            # Restore original directory before cleanup
+            os.chdir(original_dir)
+            # Force garbage collection to release file handles
+            import gc
+            gc.collect()
 
 def test_cli_version(runner):
     """Test the --version flag."""

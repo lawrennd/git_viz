@@ -48,6 +48,9 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         choco install gource ffmpeg -y
+        echo "C:\Program Files (x86)\Gource\cmd" >> $env:GITHUB_PATH
+        echo "C:\Program Files\Gource\cmd" >> $env:GITHUB_PATH
+      
 
     - name: Get poetry cache dir
       id: poetry-cache
