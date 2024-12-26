@@ -75,9 +75,49 @@ class GitVizProcessor:
             Path to the generated log file
         """
         log_file = self.temp_dir / f"{repo_path.name}.log"
-        run_command(["gource", "--output-custom-log", str(log_file), str(repo_path)])
-        return log_file
-
+        
+        # Use git log directly to generate the custom log format that Gource expects
+        git_cmd = [
+            "git",
+            "--git-dir", str(repo_path / ".git"),
+            "--work-tree", str(repo_path),
+            "log",
+            "--pretty=format:%at|%aN|%s",
+            "--name-status",
+            "--reverse"
+        ]
+        
+        try:
+            # Run git log and process its output
+            result = run_command(
+                command=git_cmd,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=str(repo_path)
+            )
+            
+            with log_file.open('w') as f:
+                timestamp = None
+                author = None
+                
+                for line in result.stdout.decode().split('\n'):
+                    if not line.strip():
+                        continue
+                        
+                    if '|' in line:  # This is a commit line
+                        timestamp, author, _ = line.split('|')
+                    elif line[0] in 'AMD':  # This is a file change line
+                        action, file_path = line.split('\t')
+                        # Convert git actions to Gource format (A=A, M=M, D=D)
+                        gource_action = action[0]
+                        # Write in Gource's expected format: timestamp|author|action|path
+                        f.write(f"{timestamp}|{author}|{gource_action}|{file_path}\n")
+            
+            return log_file
+        except Exception as e:
+            raise RuntimeError(f"Failed to generate Gource log: {str(e)}")
+        
     def _filter_log_by_date(self, log_file: Path, repo_name: str) -> Path:
         """Filter Gource log by date range."""
         filtered_log = self.temp_dir / f"{repo_name}_filtered.log"

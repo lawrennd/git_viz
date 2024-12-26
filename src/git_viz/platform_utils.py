@@ -26,8 +26,9 @@ def check_dependencies() -> List[str]:
 def run_command(
     command: List[str],
     check: bool = True,
-    stdout: Optional[int] = None,
-    stderr: Optional[int] = None,
+    stdout: Optional[int] = subprocess.PIPE,
+    stderr: Optional[int] = subprocess.PIPE,
+    cwd: Optional[str] = None
 ) -> subprocess.CompletedProcess:
     """
     Run a command with platform-specific adjustments.
@@ -37,6 +38,7 @@ def run_command(
         check: Whether to check return code
         stdout: Subprocess stdout option
         stderr: Subprocess stderr option
+        cwd: Working directory for the command
     
     Returns:
         CompletedProcess instance
@@ -57,13 +59,14 @@ def run_command(
             check=check,
             stdout=stdout,
             stderr=stderr,
+            cwd=cwd,
             creationflags=creation_flags if platform.system() == 'Windows' else 0
         )
     except FileNotFoundError as e:
         raise RuntimeError(f"Command not found: {command[0]}") from e
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Command failed: {' '.join(command)}") from e
-
+    
 def get_timestamp_format() -> str:
     """Get the platform-specific timestamp format for date conversion."""
     if platform.system() == 'Darwin':  # macOS
